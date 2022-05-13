@@ -1,74 +1,114 @@
-class Digital
+class Complex
 {
 public:
-  Digital() { }
-  Digital(int pin, int mode)
+  Complex()
+  {
+    pin_ = 0;
+    mode_ = 0;
+    analogValue_ = 0;
+  }
+  Complex(int pin, int mode)
   {
     pin_ = pin;
     mode_ = mode;
+    analogValue_ = 0;
     pinMode(pin_, mode_);
   }
-  int pin() const
+  int Pin() const
   {
     return pin_;
   }
-  int mode() const
+  int Mode() const
   {
     return mode_;
   }
+  int AnalogValue() const
+  {
+    return analogValue_;
+  }
 protected:
-  int pin_ = 0;
-  int mode_ = 0;
+  int pin_;
+  int mode_;
+  int analogValue_;
 };
-class LED : public Digital
+class LED : public Complex
 {
 public:
-  LED() : Digital()
+  LED() : Complex()
   {
   }
-  LED(int pin, int mode) : Digital(pin, mode)
+  LED(int pin) : Complex(pin, OUTPUT)
   {
   }
-  void on()
+  void On() const
   {
-    digitalWrite(pin_, HIGH);
+    analogWrite(pin_, analogValue_);
   }
-  void blink(unsigned int ms)
+  void Off() const
   {
-     digitalWrite(pin_, HIGH);
+    analogWrite(pin_, 0);
+  }
+  void Set(unsigned int value)
+  {
+    analogValue_ = value;
+  }
+  void Blink(unsigned int ms) const
+  {
+     On();
      delay(ms);
-     digitalWrite(pin_, LOW);
-  }
-};
-class ArduinoProgram
-{
-private:
-  LED leds_[3];
-public:
-  ArduinoProgram()
-  {
-  }
-  void Setup()
-  {
-    leds_[0] = LED(2, OUTPUT);
-    leds_[1] = LED(6, OUTPUT);
-    leds_[2] = LED(13, OUTPUT); 
-  }
-  void Loop()
-  {
-    leds_[0].blink(100);
-    leds_[1].blink(200);
-    leds_[2].blink(300);
+     Off();
+     delay(ms);
   }
 };
 
-ArduinoProgram arduinoProgram = ArduinoProgram();
+auto Red = LED(11);
+auto Green = LED(10);
+auto Blue = LED(9);
 
 void setup()
 {
-  arduinoProgram.Setup();
+  Red.Set(255);
+  Green.Set(255);
+  Blue.Set(255);
+  
+  Red.On();
+  Green.On();
+  Blue.On();
 }
+
 void loop()
 {
-  arduinoProgram.Loop();
+  int value = map(analogRead(A0), 0, 1023, 0, 255);
+  const int Third = 255 / 3;
+  
+  if (value < Third)
+  {
+    Red.Set(255);
+    Red.On();
+    
+    Green.Set(255);
+    Green.On();
+    
+    Blue.Off();
+  }
+  else if (Third <= value && value < Third * 2)
+  {
+    Red.Set(255);
+    Red.On();
+    
+    Green.Off();
+    
+    Blue.Set(255);    
+    Blue.On();
+  }
+  else
+  {
+    Red.Off();
+    
+    Green.Set(255);
+    Green.On();
+    
+    Blue.Set(255);
+    Blue.On();
+  }
 }
