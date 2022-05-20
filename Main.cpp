@@ -1,17 +1,17 @@
-class Complex
+class Element
 {
 public:
-  Complex()
+  Element()
   {
     pin_ = 0;
     mode_ = 0;
-    analogValue_ = 0;
+    value_ = 0;
   }
-  Complex(int pin, int mode)
+  Element(int pin, int mode)
   {
     pin_ = pin;
     mode_ = mode;
-    analogValue_ = 0;
+    value_ = 0;
     pinMode(pin_, mode_);
   }
   int Pin() const
@@ -22,35 +22,36 @@ public:
   {
     return mode_;
   }
-  int AnalogValue() const
+  virtual int Value()
   {
-    return analogValue_;
+    return value_;
+  }
+  void SetValue(int value)
+  {
+    value_ = value;
   }
 protected:
   int pin_;
   int mode_;
-  int analogValue_;
+  int value_;
 };
-class LED : public Complex
+
+class LED : public Element
 {
 public:
-  LED() : Complex()
+  LED() : Element()
   {
   }
-  LED(int pin) : Complex(pin, OUTPUT)
+  LED(int pin) : Element(pin, OUTPUT)
   {
   }
   void On() const
   {
-    analogWrite(pin_, analogValue_);
+    analogWrite(pin_, value_);
   }
   void Off() const
   {
     analogWrite(pin_, 0);
-  }
-  void Set(unsigned int value)
-  {
-    analogValue_ = value;
   }
   void Blink(unsigned int ms) const
   {
@@ -60,55 +61,57 @@ public:
      delay(ms);
   }
 };
+class Button : public Element
+{
+public:
+  Button() : Element()
+  {
+  }
+  Button(int pin, int mode) : Element(pin, mode)
+  {
+  }
+  int Value() override
+  {
+    value_ = digitalRead(pin_);
+    return value_;
+  }
+};
+class Buzzer : public Element
+{
+public:
+  Buzzer() : Element()
+  {
+  }
+  Buzzer(int pin) : Element(pin, OUTPUT)
+  {
+  }
+  void Beep(int sound)
+  {
+    tone(pin_, sound);
+    delay(30);
+    noTone(pin_);
+  }
+};
 
-auto Red = LED(11);
-auto Green = LED(10);
-auto Blue = LED(9);
+Button Buttons[3] = { Button(2, INPUT_PULLUP), Button(3, INPUT), Button(4, INPUT) };
+Buzzer Buzzer1 = Buzzer(9);
 
 void setup()
 {
-  Red.Set(255);
-  Green.Set(255);
-  Blue.Set(255);
-  
-  Red.On();
-  Green.On();
-  Blue.On();
 }
 
 void loop()
 {
-  int value = map(analogRead(A0), 0, 1023, 0, 255);
-  const int Third = 255 / 3;
-  
-  if (value < Third)
+  if (Buttons[0].Value() == LOW)
   {
-    Red.Set(255);
-    Red.On();
-    
-    Green.Set(255);
-    Green.On();
-    
-    Blue.Off();
+    Buzzer1.Beep(523);
   }
-  else if (Third <= value && value < Third * 2)
+  else if (Buttons[1].Value() == LOW)
   {
-    Red.Set(255);
-    Red.On();
-    
-    Green.Off();
-    
-    Blue.Set(255);    
-    Blue.On();
+    Buzzer1.Beep(659);
   }
-  else
+  else if (Buttons[2].Value() == HIGH)
   {
-    Red.Off();
-    
-    Green.Set(255);
-    Green.On();
-    
-    Blue.Set(255);
-    Blue.On();
+    Buzzer1.Beep(783);
   }
 }
